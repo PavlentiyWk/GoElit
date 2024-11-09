@@ -1,0 +1,332 @@
+package main
+
+import (
+	"fmt"
+	"strconv"
+	"strings"
+)
+
+func Calc(expression string) (float64, error) {
+	if expression == "" {
+		return 0, fmt.Errorf("Пустая строка")
+	}
+	counter := 0
+	for _, i := range expression {
+		if string(i) == "+" || string(i) == "-" || string(i) == "*" || string(i) == "/" {
+			counter += 1
+		}
+	}
+	if counter == 0 {
+		return 0, fmt.Errorf("Некорректная строка")
+	}
+	for ind, i := range expression {
+		if ind != 0 && string(i) == "(" {
+			if _, err := strconv.Atoi(string(expression[ind-1])); err == nil {
+				return 0, fmt.Errorf("неверная строка")
+			}
+		}
+		if string(i) == ")" && ind != len(expression)-1 {
+			if _, err := strconv.Atoi(string(expression[ind+1])); err == nil {
+				return 0, fmt.Errorf("неверная строка")
+			}
+		}
+	}
+	for i3 := 0; i3 < 10000; i3++ {
+
+		if ans, err := strconv.ParseFloat(expression, 64); err == nil {
+			return ans, nil
+		}
+		if strings.Contains(expression, "+-") {
+			expression = strings.Replace(expression, "+-", "-", -1)
+		}
+		if strings.Contains(expression, "--") {
+			expression = strings.Replace(expression, "--", "+", -1)
+		}
+		in_bracket := []rune{}
+		flag := 0
+		index_first_bracket := 0
+		index_last_bracket := 0
+		flag1 := 0
+		for i := 0; i < len(expression); i++ {
+			if string([]rune(expression)[i]) == ")" {
+				if flag != 1 {
+					return 0, fmt.Errorf("неверное кол-во скобок")
+				}
+				index_last_bracket = i
+				break
+			}
+			if string([]rune(expression)[i]) == "(" {
+				if flag == 1 {
+					in_bracket = []rune{}
+				}
+				index_first_bracket = i
+				flag = 1
+				continue
+			}
+			if flag == 1 {
+				in_bracket = append(in_bracket, []rune(expression)[i])
+			}
+		}
+		if flag == 0 {
+			index_first_num := 0
+			index_last_num := 0
+			index_arifm_acrion := 0
+			count := 0
+			for ind, i1 := range expression {
+				if string(i1) == "*" || string(i1) == "/" {
+					count += 1
+					index_arifm_acrion = ind
+					break
+				}
+			}
+			if count != 0 {
+				for ind, i := range expression {
+					if ind < index_arifm_acrion && (string(i) == "+" || string(i) == "-") {
+						if string(i) == "-" {
+							index_first_num = ind
+							continue
+						}
+						index_first_num = ind + 1
+					}
+					if ind > index_arifm_acrion {
+						if _, err := strconv.Atoi(string(i)); index_last_num != 0 && string(i) != "." && err != nil {
+							break
+						}
+						if string(i) == "-" {
+							continue
+						}
+						if _, err := strconv.Atoi(string(i)); err == nil && string(i) != "." {
+							index_last_num = ind
+						}
+					}
+				}
+			} else {
+				for ind, i := range expression {
+					if _, err := strconv.Atoi(string(i)); err != nil && index_last_num != 0 && string(i) != "." {
+						break
+					}
+					if string(i) == "+" || string(i) == "-" {
+						index_arifm_acrion = ind
+					}
+					if _, err := strconv.Atoi(string(i)); index_arifm_acrion != 0 && err == nil {
+						index_last_num = ind
+					}
+				}
+
+			}
+			first_num, err := strconv.ParseFloat(expression[index_first_num:index_arifm_acrion], 64)
+			if err != nil {
+				return 0, fmt.Errorf("Неверное число")
+			}
+			var a float64 = 0
+			if index_last_num == len(expression)-1 {
+				last_num, err := strconv.ParseFloat(expression[index_arifm_acrion+1:], 64)
+				if err != nil {
+					return 0, fmt.Errorf("Неверное число")
+				}
+				a = last_num
+			} else {
+				last_num, err := strconv.ParseFloat(expression[index_arifm_acrion+1:index_last_num+1], 64)
+				a = last_num
+				last_num += 0
+				if err != nil {
+					return 0, fmt.Errorf("Неверное число")
+				}
+			}
+			last_num := a
+			switch string(expression[index_arifm_acrion]) {
+			case "*":
+				{
+					s := fmt.Sprintf("%f", first_num*last_num)
+					if index_last_num == len(expression)-1 {
+						expression = expression[:index_first_num] + s
+					} else {
+						expression = expression[:index_first_num] + s + expression[index_last_num+1:]
+					}
+				}
+			case "/":
+				{
+					if last_num == 0 {
+						return 0, fmt.Errorf("Ошбика в строке")
+					}
+					s := fmt.Sprintf("%f", first_num/last_num)
+					if index_last_num == len(expression)-1 {
+						expression = expression[:index_first_num] + s
+					} else {
+						expression = expression[:index_first_num] + s + expression[index_last_num+1:]
+					}
+				}
+			case "+":
+				{
+					s := fmt.Sprintf("%f", first_num+last_num)
+					if index_last_num == len(expression)-1 {
+						expression = expression[:index_first_num] + s
+					} else {
+						expression = expression[:index_first_num] + s + expression[index_last_num+1:]
+					}
+				}
+			case "-":
+				{
+					s := fmt.Sprintf("%f", first_num-last_num)
+					if index_last_num == len(expression)-1 {
+						expression = expression[:index_first_num] + s
+					} else {
+						expression = expression[:index_first_num] + s + expression[index_last_num+1:]
+					}
+				}
+			}
+			if ans, err := strconv.ParseFloat(expression, 64); err == nil {
+				return ans, nil
+			}
+			continue
+		}
+		count_arifm := 0
+		for _, i := range expression[index_first_bracket+1 : index_last_bracket] {
+			if string(i) == "+" || string(i) == "-" || string(i) == "*" || string(i) == "/" {
+				count_arifm += 1
+			}
+		}
+		if count_arifm == 0 {
+			flag1 = 1
+		}
+		in_bracket1 := ""
+		for _, i := range in_bracket {
+			in_bracket1 += string(i)
+		}
+
+		if i3, err := strconv.ParseFloat(in_bracket1, 64); err == nil && i3 < 0 {
+			if index_last_bracket == len(expression)-1 {
+				expression = expression[:index_first_bracket] + in_bracket1
+
+				continue
+			} else {
+				expression = expression[:index_first_bracket] + in_bracket1 + expression[index_last_bracket+1:]
+
+				continue
+			}
+		}
+		if strings.Contains(expression, "+-") {
+
+			expression = strings.Replace(expression, "+-", "-", -1)
+
+			continue
+		}
+		if strings.Contains(expression, "--") {
+			expression = strings.Replace(expression, "--", "+", -1)
+
+			continue
+		}
+
+		if flag1 == 1 {
+
+			if index_last_bracket != len(expression)-1 {
+				expression = expression[:index_first_bracket] + expression[index_first_bracket+1:index_last_bracket] + expression[index_last_bracket+1:]
+			} else {
+				expression = expression[:index_first_bracket] + expression[index_first_bracket+1:index_last_bracket]
+			}
+
+			flag1 = 0
+			continue
+		}
+		index_first_num := index_first_bracket + 1
+		index_last_num := 0
+		index_arifm_acrion := 0
+		count := 0
+
+		for i := index_first_bracket; i < index_last_bracket; i++ {
+			if string([]rune(expression)[i]) == "*" || string([]rune(expression)[i]) == "/" {
+				count += 1
+			}
+		}
+		if count != 0 {
+			for i := index_first_bracket + 1; i < index_last_bracket; i++ {
+				a := string([]rune(expression)[i])
+				if a == "-" {
+					if index_arifm_acrion == 0 {
+						index_first_num = i + 1
+					}
+					continue
+				}
+				if a == "*" || a == "/" {
+					index_arifm_acrion = i
+					continue
+				}
+				if index_arifm_acrion != 0 {
+					if _, err := strconv.Atoi(string([]rune(expression)[i+1])); (string([]rune(expression)[index_arifm_acrion]) == "*" || string([]rune(expression)[index_arifm_acrion]) == "/") && (i+1 == index_last_bracket || err != nil) && string([]rune(expression)[i+1]) != "." {
+						index_last_num = i
+
+						break
+					}
+				}
+				if _, err := strconv.Atoi(string([]rune(expression)[i])); err != nil && string([]rune(expression)[i]) != "." {
+					index_first_num = i + 1
+
+					continue
+				}
+
+			}
+		} else {
+			for i := index_first_bracket + 1; i < index_last_bracket; i++ {
+				a := string([]rune(expression)[i])
+				if index_arifm_acrion != 0 && (a == "+" || a == "-") && a != "." {
+					break
+				}
+				if a == "+" {
+					index_arifm_acrion = i
+				}
+				if a == "-" && index_arifm_acrion == 0 && i != index_first_num {
+					index_arifm_acrion = i
+				}
+				if index_arifm_acrion != 0 {
+					index_last_num = i
+				}
+			}
+		}
+		if index_arifm_acrion >= len(expression) || index_first_num >= len(expression) || index_last_num >= len(expression) || index_first_num >= index_last_num {
+			return 0, fmt.Errorf("Неверная строчка1")
+		}
+		first_num, err1 := strconv.ParseFloat(expression[index_first_num:index_arifm_acrion], 64)
+		if err1 != nil {
+			return 0, fmt.Errorf("неверное число")
+		}
+		last_num, err2 := strconv.ParseFloat(expression[index_arifm_acrion+1:index_last_num+1], 64)
+		if err2 != nil {
+			return 0, fmt.Errorf("неверное число")
+		}
+		switch string([]rune(expression)[index_arifm_acrion]) {
+		case "*":
+			{
+				s := fmt.Sprintf("%f", first_num*last_num)
+				expression = expression[:index_first_num] + s + expression[index_last_num+1:]
+			}
+		case "/":
+			{
+				if last_num != 0 {
+					s := fmt.Sprintf("%f", first_num/last_num)
+					expression = expression[:index_first_num] + s + expression[index_last_num+1:]
+				} else {
+					return 0, fmt.Errorf("деление на 0 невозможно")
+				}
+			}
+		case "+":
+			{
+				s := fmt.Sprintf("%f", first_num+last_num)
+				expression = expression[:index_first_num] + s + expression[index_last_num+1:]
+			}
+		case "-":
+			{
+				s := fmt.Sprintf("%f", first_num-last_num)
+				expression = expression[:index_first_num] + s + expression[index_last_num+1:]
+			}
+		}
+
+	}
+	if answ, err := strconv.ParseFloat(expression, 64); err != nil {
+		return 0, fmt.Errorf("Ошибка")
+	} else {
+		return answ, nil
+	}
+}
+
+// func main() {
+// }
