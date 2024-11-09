@@ -1,0 +1,36 @@
+package main
+
+import (
+	"fmt"
+)
+
+func pref(str []string) string {
+	a := ""
+	minlen := 10000000
+	for i := range len(str) {
+		minlen = min(minlen, len(string(str[i])))
+	}
+	flag := 0
+	for i := 0; i < minlen; i++ {
+		s := make(map[string]bool)
+		for i1 := range len(str) {
+			if len(s) == 0 {
+				s[string(str[i1][i])] = true
+			} else {
+				if _, i2 := s[string(str[i1][i])]; i2 == false {
+					flag = 1
+					break
+				}
+			}
+		}
+		if flag == 1 {
+
+			break
+		}
+		a += string(str[0][i])
+	}
+	return a
+}
+func main() {
+	fmt.Println(pref([]string{"b", "abd", "ab"}))
+}
